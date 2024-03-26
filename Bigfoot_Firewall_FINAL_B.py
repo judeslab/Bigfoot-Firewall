@@ -17,6 +17,9 @@ def execute_subprocess_command(command, expect_output=False):
         return None
 
 def refresh_iptables_rules():
+    """
+    Clear existing items from the iptables rules table and reload them.
+    """
     iptables_rules_table.delete(*iptables_rules_table.get_children())
     load_iptables_rules()
 
@@ -86,127 +89,94 @@ def delete_all_rules():
 # GUI Setup
 window = tk.Tk()
 window.title("Bigfoot Firewall")
-window.configure(background='black')  # Set window background to black
 
-# Darker theme with green
-style = ttk.Style()
-style.theme_use('clam')  # Change 'clam' to another theme if desired
-
-# Define custom colors
-style.configure('Treeview', background='#334d4d', foreground='white', fieldbackground='#334d4d')
-style.map('Treeview', background=[('selected', '#134d4d')])
-
-container = tk.Frame(window, background='black')  # Set container frame background to black
+container = tk.Frame(window)
 container.pack(fill=tk.BOTH, expand=True)
 
-container.grid_columnconfigure(0, weight=1)
-container.grid_rowconfigure(0, weight=1)  # Gives table frame ability to expand vertically
-container.grid_rowconfigure(1, weight=0)  # Keeps input options fixed height
-container.grid_rowconfigure(2, weight=0)  # Keeps buttons fixed height
-
-# Table Frame
-iptables_rules_table_frame = tk.Frame(container, background='black')  # Set table frame background to black
-iptables_rules_table_frame.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+iptables_rules_table_frame = tk.Frame(container)
+iptables_rules_table_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
 scrollbar = ttk.Scrollbar(iptables_rules_table_frame)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-iptables_rules_table = ttk.Treeview(iptables_rules_table_frame, columns=('Rule No.', 'Direction', 'Protocol', 'Source IP', 'Source Port', 'Destination IP', 'Destination Port', 'Accept or Reject'), yscrollcommand=scrollbar.set, show='headings', style='Treeview')
+iptables_rules_table = ttk.Treeview(iptables_rules_table_frame, columns=('Rule No.', 'Direction', 'Protocol', 'Source IP', 'Source Port', 'Destination IP', 'Destination Port', 'Accept or Reject'), yscrollcommand=scrollbar.set, show='headings')
 for heading in iptables_rules_table['columns']:
     iptables_rules_table.heading(heading, text=heading)
 iptables_rules_table.pack(fill=tk.BOTH, expand=True)
 
 scrollbar.config(command=iptables_rules_table.yview)
 
-# Input Options Frame
-input_options_frame = tk.Frame(container, background='black')  # Set input options frame background to black
-input_options_frame.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
-container.grid_columnconfigure(0, weight=1)
+input_options_frame = tk.Frame(container)
+input_options_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-# Direction Button for INPUT/OUTPUT/FORWARD
-direction_label = tk.Label(input_options_frame, text="Direction:", background='black', foreground='white')  # Set label background to black
+direction_label = tk.Label(input_options_frame, text="Direction:")
 direction_label.pack(side='left')
-direction_var = tk.StringVar(value="INPUT")
-direction_option = tk.OptionMenu(input_options_frame, direction_var, "INPUT", "OUTPUT", "FORWARD")
-direction_option.pack(side='left', padx=5)
+direction_var = tk.StringVar()
+direction_var.set("Input")
+direction_option = tk.OptionMenu(input_options_frame, direction_var, "Input", "Output", "Forward")
+direction_option.pack(side='left')
 
-# Protocol Button for TCP/UDP/ICMP
-protocol_label = tk.Label(input_options_frame, text="Protocol:", background='black', foreground='white')  # Set label background to black
+protocol_label = tk.Label(input_options_frame, text="Protocol:")
 protocol_label.pack(side='left')
-protocol_var = tk.StringVar(value="tcp")
-protocol_option = tk.OptionMenu(input_options_frame, protocol_var, "tcp", "udp", "icmp")
-protocol_option.pack(side='left', padx=5)
+protocol_var = tk.StringVar()
+protocol_var.set("tcp")
+protocol_option = tk.OptionMenu(input_options_frame, protocol_var, "tcp", "udp", "icmp")  # Added "icmp"
+protocol_option.pack(side='left')
 
-# Source IP Entry
-source_ip_label = tk.Label(input_options_frame, text="Source IP:", background='black', foreground='white')  # Set label background to black
-source_ip_label.pack(side='left')
-source_ip_entry = tk.Entry(input_options_frame)
-source_ip_entry.pack(side='left', padx=5)
-
-# Source Port Entry
-source_port_label = tk.Label(input_options_frame, text="Source Port:", background='black', foreground='white')  # Set label background to black
-source_port_label.pack(side='left')
-source_port_entry = tk.Entry(input_options_frame)
-source_port_entry.pack(side='left', padx=5)
-
-# Destination IP Entry
-destination_ip_label = tk.Label(input_options_frame, text="Destination IP:", background='black', foreground='white')  # Set label background to black
-destination_ip_label.pack(side='left')
-destination_ip_entry = tk.Entry(input_options_frame)
-destination_ip_entry.pack(side='left', padx=5)
-
-# Destination Port Entry
-destination_port_label = tk.Label(input_options_frame, text="Destination Port:", background='black', foreground='white')  # Set label background to black
-destination_port_label.pack(side='left')
-destination_port_entry = tk.Entry(input_options_frame)
-destination_port_entry.pack(side='left', padx=5)
-
-# ACCEPT / REJECT Traffic Button
-accept_reject_label = tk.Label(input_options_frame, text="Action:", background='black', foreground='white')  # Set label background to black
-accept_reject_label.pack(side='left')
-accept_reject_var = tk.StringVar(value="ACCEPT")
-accept_reject_option = tk.OptionMenu(input_options_frame, accept_reject_var, "ACCEPT", "REJECT")
-accept_reject_option.pack(side='left', padx=5)
-
-# Button Frame
-button_frame = tk.Frame(container, background='black')  # Set button frame background to black
-button_frame.grid(row=2, column=0, sticky="ew")
-button_frame.grid_columnconfigure(0, weight=1)
-button_frame.grid_columnconfigure(1, weight=1)
+# Main container for buttons
+button_frame = tk.Frame(container)
+button_frame.pack(fill=tk.X, expand=True, side='bottom')
 
 # Left-aligned buttons container
-left_button_frame = tk.Frame(button_frame, background='black')  # Set left button frame background to black
-left_button_frame.grid(row=0, column=0, sticky="w", padx=5)
+left_button_frame = tk.Frame(button_frame)
+left_button_frame.pack(side='left', padx=5, pady=5)
 
 # Right-aligned buttons container
-right_button_frame = tk.Frame(button_frame, background='black')  # Set right button frame background to black
-right_button_frame.grid(row=0, column=1, sticky="e", padx=5)
+right_button_frame = tk.Frame(button_frame)
+right_button_frame.pack(side='right', padx=5, pady=5)
 
-# Delete Rule Button
-delete_rule_button = tk.Button(right_button_frame, text="Delete Rule")
-delete_rule_button.pack(side='right', padx=5)
+# Delete All Rules Button (Far Bottom Left)
+delete_all_button = tk.Button(left_button_frame, text="Delete All Rules", command=delete_all_rules, relief="raised", bd=2)
+delete_all_button.pack(side='left')
 
-# Add Rule Button
-add_rule_button = tk.Button(right_button_frame, text="Add Rule")
-add_rule_button.pack(side='right', padx=5)
+# Delete Rule Button (Far Bottom Right)
+delete_rule_button = tk.Button(right_button_frame, text="Delete Rule", command=delete_rule, relief="raised", bd=2)
+delete_rule_button.pack(side='right')
 
-# Delete ALL RULES Button
-delete_all_button = tk.Button(left_button_frame, text="Delete All Rules")
-delete_all_button.pack(side='left', padx=5)
+# Add Rule Button (To the left of "Delete Rule")
+add_rule_button = tk.Button(right_button_frame, text="Add Rule", command=add_rule, relief="raised", bd=2)
+add_rule_button.pack(side='right')
 
-# Placeholder functions
-def delete_rule():
-    pass
+source_ip_label = tk.Label(input_options_frame, text="Source IP:")
+source_ip_label.pack(side='left')
+source_ip_entry = tk.Entry(input_options_frame, relief="solid", bd=2)
+source_ip_entry.pack(side='left')
 
-def add_rule():
-    pass
+source_port_label = tk.Label(input_options_frame, text="Source Port (optional):")
+source_port_label.pack(side='left')
+source_port_entry = tk.Entry(input_options_frame, relief="solid", bd=2)
+source_port_entry.pack(side='left')
 
-def delete_all_rules():
-    pass
+destination_ip_label = tk.Label(input_options_frame, text="Destination IP:")
+destination_ip_label.pack(side='left')
+destination_ip_entry = tk.Entry(input_options_frame, relief="solid", bd=2)
+destination_ip_entry.pack(side='left')
 
-def load_iptables_rules():
-    pass
+destination_port_label = tk.Label(input_options_frame, text="Destination Port (optional):")
+destination_port_label.pack(side='left')
+destination_port_entry = tk.Entry(input_options_frame, relief="solid", bd=2)
+destination_port_entry.pack(side='left')
+
+accept_reject_label = tk.Label(input_options_frame, text="Accept or Reject:")
+accept_reject_label.pack(side='left')
+accept_reject_var = tk.StringVar()
+accept_reject_var.set("ACCEPT")
+accept_reject_option = tk.OptionMenu(input_options_frame, accept_reject_var, "ACCEPT", "REJECT")
+accept_reject_option.pack(side='left')
 
 load_iptables_rules()
+
+container.grid_columnconfigure(0, weight=1)
+container.grid_rowconfigure(0, weight=1)
 
 window.mainloop()
